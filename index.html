@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Culinário - Técnicas e Sabores do Mundo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* PALETA DE CORES (Tons Quentes/Culinários) */
+        :root {
+            --bg-color: #fff7ed;
+            --card-bg: #ffffff;
+            --primary: #ea580c;
+            --primary-dark: #c2410c;
+            --success: #16a34a;
+            --error: #dc2626;
+            --text-main: #292524;
+            --text-light: #78716c;
+            --border-radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Nunito', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 20px 40px rgba(234, 88, 12, 0.08);
+            overflow: hidden;
+            position: relative;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* BARRA DE PROGRESSO */
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #ffedd5;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* HEADER */
+        .header {
+            padding: 40px 50px 20px;
+            text-align: center;
+        }
+
+        .topic-badge {
+            display: inline-block;
+            background: #ffedd5;
+            color: var(--primary-dark);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        /* TELAS */
+        .screen {
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+            padding: 20px 50px 50px;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* TELA DE INTRODUÇÃO */
+        #intro-screen {
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 40px;
+        }
+
+        .intro-title {
+            font-family: 'Lora', serif;
+            font-size: 44px;
+            color: var(--text-main);
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .intro-title span {
+            color: var(--primary);
+        }
+
+        .btn-main {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+            box-shadow: 0 10px 20px rgba(234, 88, 12, 0.2);
+        }
+
+        .btn-main:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+        }
+
+        /* TELA DE PERGUNTAS */
+        .question-text {
+            font-family: 'Lora', serif;
+            font-size: 28px;
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--text-main);
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 700px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .option-btn {
+            background: #fdf8f6;
+            border: 2px solid #ffedd5;
+            padding: 20px 25px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-family: 'Nunito', sans-serif;
+            color: var(--text-main);
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: white;
+            transform: scale(1.02);
+        }
+
+        .option-btn span {
+            font-weight: 700;
+            color: var(--primary);
+            margin-right: 15px;
+            font-size: 20px;
+        }
+
+        .option-btn.correct {
+            background: #f0fdf4 !important;
+            border-color: var(--success) !important;
+            color: var(--success);
+        }
+
+        .option-btn.wrong {
+            background: #fef2f2 !important;
+            border-color: var(--error) !important;
+            color: var(--error);
+        }
+
+        /* MODAL DE FEEDBACK */
+        .feedback-panel {
+            position: absolute;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            background: white;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+            padding: 40px 50px;
+            border-radius: 30px 30px 0 0;
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* ESPAÇO PARA IMAGEM ENTRE PERGUNTA E OPÇÕES */
+        .question-image {
+            height: 220px;
+            max-width: 700px;
+            margin: 20px auto;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #fffaf0, #fff3ea);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 6px 18px rgba(234,88,12,0.06);
+        }
+
+        .question-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .question-image a {
+            color: var(--primary);
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 18px;
+            padding: 16px 24px;
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 6px 18px rgba(234,88,12,0.08);
+        }
+
+        .question-image a:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .feedback-panel.show {
+            bottom: 0;
+        }
+
+        .feedback-title {
+            font-family: 'Lora', serif;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .feedback-text {
+            font-size: 18px;
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 30px;
+            max-width: 800px;
+        }
+
+        /* INPUT EASTER EGG */
+        .secret-input {
+            margin-top: 25px;
+            padding: 10px 15px;
+            border: 2px dashed #ffedd5;
+            border-radius: 8px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 14px;
+            text-align: center;
+            outline: none;
+            color: var(--text-light);
+            transition: border-color 0.3s;
+        }
+        
+        .secret-input:focus {
+            border-color: var(--primary);
+        }
+
+        /* RESPONSIVIDADE */
+        @media (max-width: 768px) {
+            .app-container { min-height: 100vh; border-radius: 0; }
+            .intro-title { font-size: 32px; }
+            .question-text { font-size: 22px; }
+            .option-btn { font-size: 16px; padding: 15px; }
+            .screen { padding: 20px; }
+            .feedback-panel { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div id="intro-screen" class="screen active">
+        <div class="topic-badge">Gastronomia Mundial</div>
+        <h1 class="intro-title">Quiz de Preparo Técnico:<br><span>Técnicas, Woks</span></h1>
+        <p style="color: var(--text-light); font-size: 18px; max-width: 700px; margin-top: 10px;">
+            Domine as bases: do controlo de temperatura na wok, pastas cremosas do Médio Oriente, os clássicos africanos, massas frescas italianas e os segredos do fogo e da cozedura!
+        </p>
+        <button class="btn-main" onclick="startQuiz()">Começar o Quiz</button>
+    </div>
+
+    <div id="quiz-screen" class="screen">
+        <div class="header">
+            <div class="topic-badge" id="question-counter">Questão 1 de 58</div>
+        </div>
+        <h2 class="question-text" id="question-text">A carregar pergunta...</h2>
+        <!-- Espaço reservado para imagem relacionada à pergunta -->
+        <div id="question-image" class="question-image" aria-hidden="true"></div>
+        <div class="options-list" id="options-container">
+            </div>
+    </div>
+
+    <div id="result-screen" class="screen" style="text-align: center; justify-content: center; align-items: center;">
+        <div class="topic-badge">Avaliação Concluída</div>
+        <div class="score-display" id="final-score">0/50</div>
+        <h2 style="font-family: 'Lora'; font-size: 28px; margin-bottom: 15px;" id="result-title">Bom trabalho!</h2>
+        <p style="color: var(--text-light); font-size: 18px; max-width: 600px;" id="result-message"></p>
+        <button class="btn-main" onclick="location.reload()">Jogar Novamente</button>
+        
+        <input type="text" id="easter-egg-trigger" class="secret-input" placeholder="Código secreto?..." oninput="checkSecretCode(this.value)">
+    </div>
+
+    <div id="easter-egg-screen" class="screen" style="text-align: center; justify-content: center; align-items: center; background: #fff1f2;">
+        <div class="topic-badge" style="background: #ffe4e6; color: #e11d48;">Surpresa para a Chef! 🍳❤️</div>
+        <h1 style="font-family: 'Lora', serif; font-size: 38px; color: #9f1239; margin-bottom: 20px;">Super Chef Fe</h1>
+        <p style="color: #4c0519; font-family: 'Lora', serif; font-size: 24px; max-width: 650px; font-weight: 700; line-height: 1.6; font-style: italic; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(225, 29, 72, 0.05);">
+            "Se você for bem na prova, eu te levo pra sair pra onde você quiser" V.
+        </p>
+        <button class="btn-main" style="background: #e11d48; box-shadow: 0 10px 20px rgba(225, 29, 72, 0.2);" onclick="closeEasterEgg()">Voltar aos Resultados</button>
+    </div>
+
+    <div id="feedback-panel" class="feedback-panel">
+        <h3 class="feedback-title" id="feedback-title">Resposta</h3>
+        <div class="feedback-text" id="feedback-text">Explicação...</div>
+        <button class="btn-main" style="margin-top: 0;" id="next-btn" onclick="nextQuestion()">Próxima Questão</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        // --- BLOCO de questoes ---
+        {
+            topic: "Pilares da culinária sul-americana",
+            q: "Quais são os principais pilares da culinária da América do Sul?",
+            image: "images/culinaria-america-do-sul.webp",
+            options: ["Arroz, soja, peixe e algas", "Batatas, milho, carnes e frutos do mar", "Trigo, leite, manteiga e vinho", "Massas, queijo e tomate", "Pão, carne suína e cerveja"],
+            correct: 1,
+            exp: "Base alimentar tradicional:\n\n👉 batatas e milho (herança indígena)\n👉 carnes\n👉 forte presença de frutos do mar no litoral"
+        },
+        {
+            topic: "Influências Culturais",
+            q: "A culinária sul-americana é resultado de quais influências principais?",
+            image: "images/pirao-comida-indigena-scaled.jpg",
+            options: ["Apenas europeias", "Apenas indígenas", "Indígenas, africanas, europeias e orientais", "Apenas africanas", "Apenas asiáticas"],
+            correct: 2,
+            exp: "Mistura cultural forte:\n\n👉 povos nativos (Incas, Quéchuas)\n👉 europeus (espanhóis e italianos)\n👉 africanos\n👉 orientais"
+        },
+        {
+            topic: "Preparos Clássicos",
+            q: "Qual dos pratos abaixo é um preparo clássico da América do Sul?",
+            image: "images/supercarne.webp",
+            options: ["Sushi", "Ratatouille", "Tempura", "Ceviche", "Curry"],
+            correct: 3,
+            exp: "Ceviche é um dos mais emblemáticos:\n\n👉 peixe cru “cozido” no limão\n👉 muito comum no Peru"
+        },
+        {
+            topic: "Receita Base – Receituário",
+            q: "O Locro é caracterizado principalmente por:",
+            image: "images/Locro03crop.jpg",
+            options: ["Um prato cru à base de peixe", "Uma sobremesa com leite e açúcar", "Um prato frito de massa", "Um ensopado leve de legumes", "Um ensopado espesso com milho, carnes e abóbora"],
+            correct: 4,
+            exp: "Características do locro:\n\n👉 cozimento lento\n👉 milho macerado\n👉 carnes diversas\n👉 textura espessa e robusta"
+        },
+        {
+            topic: "Contexto Geral EUA",
+            q: "A culinária dos Estados Unidos é melhor descrita como:",
+            image: "images/oficina-de-inverno-culinaria-dos-estados-unidos-comidas-tipicas-hamburger-capa.webp",
+            options: ["Totalmente homogênea e sem influências externas", "Baseada apenas em técnicas indígenas", "Restrita à culinária francesa", "Extremamente diversa, com múltiplas influências culturais", "Exclusivamente vegetariana"],
+            correct: 3,
+            exp: "Os EUA têm:\n\n👉 forte diversidade cultural\n👉 influência europeia, latina, africana e asiática\n👉 divisão por regiões culinárias"
+        },
+        {
+            topic: "Influências Culturais EUA",
+            q: "A cozinha Cajun e Creole da Louisiana sofreu influência principalmente de:",
+            image: "images/images.jpg",
+            options: ["Japão e China", "França, Caribe, Espanha e África", "Alemanha e Rússia", "Índia e Tailândia", "Portugal e Itália"],
+            correct: 1,
+            exp: "Essa culinária é um mix cultural:\n\n👉 colonização francesa\n👉 influências africanas\n👉 elementos caribenhos e espanhóis"
+        },
+        {
+            topic: "Preparos Clássicos México",
+            q: "Qual elemento é característico da culinária mexicana tradicional?",
+            image: "images/images (1).jpg",
+            options: ["Uso de massas italianas", "Preparos com leite e manteiga", "Molhos complexos chamados “moles”", "Uso predominante de peixe cru", "Técnicas de fermentação japonesa"],
+            correct: 2,
+            exp: "Os moles:\n\n👉 molhos complexos\n👉 podem ter dezenas de ingredientes\n👉 base importante da culinária mexicana"
+        },
+        {
+            topic: "Receita Base – Guacamole",
+            q: "O guacamole é preparado principalmente a partir de:",
+            image: "images/1614288605603816dd15c62_1614288605_3x2_rt.jpg",
+            options: ["Batata e manteiga", "Feijão e carne", "Tomate e queijo", "Milho e arroz", "Abacate amassado com temperos"],
+            correct: 4,
+            exp: "Base do guacamole:\n\n👉 abacate\n👉 tomate\n👉 cebola\n👉 limão e coentro"
+        },
+        {
+            topic: "Contexto Geral França",
+            q: "Por que a culinária francesa é considerada fundamental na gastronomia mundial?",
+            image: "images/cozinha-francesa-1024x684.webp",
+            options: ["Porque usa poucos ingredientes", "Porque é a mais antiga do mundo", "Porque padronizou técnicas, brigadas e terminologias", "Porque é baseada apenas em doces", "Porque não utiliza molhos"],
+            correct: 2,
+            exp: "A França estruturou:\n\n👉 técnicas clássicas\n👉 organização de cozinha (brigada)\n👉 linguagem gastronômica universal"
+        },
+        {
+            topic: "Influências Culturais França",
+            q: "Durante o Renascimento, qual influência impactou fortemente a culinária francesa?",
+            image: "images/cuisine-du-terroir.jpg",
+            options: ["Alemã", "Italiana", "Japonesa", "Árabe", "Inglesa"],
+            correct: 1,
+            exp: "Influência italiana:\n\n👉 introdução do azeite\n👉 uso de massas\n👉 refinamento de técnicas"
+        },
+        {
+            topic: "Preparos Clássicos França",
+            q: "Qual dos pratos abaixo é um clássico da culinária francesa?",
+            image: "images/Pratos-Principais-da-Culinaria-Francesa-French-Language-Salon.png",
+            options: ["Soupe à l’oignon", "Sushi", "Pad Thai", "Taco", "Yakissoba"],
+            correct: 0,
+            exp: "A sopa de cebola:\n\n👉 prato tradicional francês\n👉 base em caldo + cebola caramelizada\n👉 finalização gratinada"
+        },
+        {
+            topic: "Receita Base – Crème Pâtissière",
+            q: "O creme de confeiteiro (crème pâtissière) é utilizado principalmente para:",
+            image: "images/96e5c789d9b8bf3a9e86699e2b445aec_XL.jpg",
+            options: ["Preparar carnes", "Fazer massas salgadas", "Temperar saladas", "Base de sobremesas e recheios", "Fermentar pães"],
+            correct: 3,
+            exp: "Função do creme:\n\n👉 recheios de doces\n👉 base para confeitaria\n👉 textura cremosa e estruturada"
+        },
+        {
+            topic: "Contexto Geral África",
+            q: "A culinária africana é melhor caracterizada como:",
+            image: "images/alimentacao-na-africa.webp",
+            options: ["Uniforme em todo o continente", "Baseada apenas em frutos do mar", "Restrita ao norte da África", "Influenciada apenas pela Europa", "Extremamente diversa, com grande pluralidade cultural"],
+            correct: 4,
+            exp: "A África tem:\n\n👉 54 países\n👉 múltiplas etnias\n👉 grande variedade de ingredientes e técnicas"
+        },
+        {
+            topic: "Influências Culturais Brasil",
+            q: "Qual foi o principal impacto da culinária africana na formação da cozinha brasileira?",
+            image: "images/culinaria-diversidade-cultural-brasil.webp",
+            options: ["Introdução do trigo", "Uso de manteiga", "Uso de dendê, pimentas e quiabo", "Técnicas de panificação", "Uso de vinho"],
+            correct: 2,
+            exp: "Influência direta no Brasil:\n\n👉 azeite de dendê\n👉 pimentas\n👉 quiabo\n👉 base da comida de santo"
+        },
+        {
+            topic: "Preparos Clássicos África",
+            q: "Qual característica é comum em muitas preparações da África Subsaariana?",
+            image: "images/int-culinaria-da-Africa-620x413.webp",
+            options: ["Uso predominante de alimentos crus", "Técnicas de fermentação japonesa", "Uso exclusivo de arroz", "Pratos leves e frios", "Uso de cozimentos longos e ingredientes locais"],
+            correct: 4,
+            exp: "Padrão culinário:\n\n👉 cozimentos lentos\n👉 uso de insumos locais\n👉 pratos encorpados e nutritivos"
+        },
+        {
+            topic: "Receita Base – Cachupa",
+            q: "A Cachupa é melhor descrita como:",
+            image: "images/cape-verde-cachupa-scaled.jpg",
+            options: ["Um prato cru de peixe", "Uma sopa leve de legumes", "Uma sobremesa doce", "Um ensopado robusto com milho, feijão, carnes e tubérculos", "Um prato frito de massa"],
+            correct: 3,
+            exp: "Cachupa:\n\n👉 prato tradicional de Cabo Verde\n👉 mistura milho + feijão + carnes\n👉 semelhante a uma “feijoada de milho"
+        },
+        {
+            topic: "Contexto Geral China",
+            q: "A culinária chinesa é tradicionalmente organizada em:",
+            image: "images/Chinese-food-scaled.webp",
+            options: ["Dois estilos principais", "Uma única tradição nacional", "Dez regiões iguais", "Quatro grandes macrorregiões culinárias", "Apenas culinária imperial"],
+            correct: 3,
+            exp: "Divisão clássica:\n\n👉 Norte (trigo e massas)\n👉 Sul (rica e agrícola)\n👉 Leste (pesca + agricultura)\n👉 Oeste/Sichuan (picante e intenso)"
+        },
+        {
+            topic: "Influências Culturais China",
+            q: "Qual filosofia influencia diretamente a culinária chinesa?",
+            image: "images/AD_4nXc4Q-jiksFJyc_1g9mi7JNDBhY0S0cjY6hRjc85jQo9AM7i6azoyYja4QGmjVr6ioIiYEr-s2GvzBkqLYLy5Y3QVdIANDG282Pt5Zr0eVmDUP1pjQa8Izl_Zs9CXVK7JK925-u0Q.png",
+            options: ["Existencialismo", "Iluminismo", "Taoísmo e Confucionismo", "Renascimento europeu", "Cristianismo medieval"],
+            correct: 2,
+            exp: "Base filosófica:\n\n👉 busca por equilíbrio\n👉 harmonia entre sabores e texturas\n👉 influência espiritual na comida"
+        },
+        {
+            topic: "Preparos Clássicos China",
+            q: "Qual técnica é característica da culinária chinesa?",
+            image: "images/pexels-angela-roma-7363743.jpg",
+            options: ["Assar lentamente no forno", "Hung-shu (cozimento vermelho com molho de soja)", "Fermentação com arroz", "Cozimento em baixa temperatura por dias", "Uso exclusivo de grelha"],
+            correct: 1,
+            exp: "Hung-shu:\n\n👉 cozimento longo\n👉 molho de soja\n👉 cor escura intensa\n👉 sabor profundo"
+        },
+        {
+            topic: "Receita Base – Sushi",
+            q: "O sushi surgiu originalmente como:",
+            image: "images/images (2).jpg",
+            options: ["Um prato de luxo japonês", "Um tipo de sopa", "Um método de fritura", "Um doce tradicional", "Um método de conservação do peixe"],
+            correct: 4,
+            exp: "Origem real:\n\n👉 peixe envolto em arroz\n👉 arroz fermentava\n👉 conservava o peixe\n👉 arroz era descartado inicialmente"
+        },
+        {
+            topic: "Contexto Geral Oriente Médio",
+            q: "A região do Oriente Médio é considerada o berço da civilização porque:",
+            image: "images/historia-culinaria-arabe-c2698f46.jpg",
+            options: ["Foi onde surgiram os primeiros fast-foods", "Foi onde se originaram técnicas modernas de cozinha", "Possui grande área agrícola atual", "Foi o primeiro lugar com restaurantes", "Foi onde começaram a domesticação de animais e cultivo de grãos"],
+            correct: 4,
+            exp: "Importância histórica:\n\n👉 início da agricultura\n👉 domesticação de animais\n👉 base alimentar da humanidade"
+        },
+        {
+            topic: "Influências Culturais Halal",
+            q: "As leis alimentares islâmicas (Halal) proíbem principalmente:",
+            image: "images/Ideias-comida-halal-para-casamentos-islamicos.webp",
+            options: ["Carne bovina", "Leite e derivados", "Carne de porco e álcool", "Grãos e legumes", "Frutas cítricas"],
+            correct: 2,
+            exp: "Regras do Halal:\n\n👉 proibição de carne de porco\n👉 proibição de bebidas alcoólicas\n👉 também restrições sobre sangue"
+        },
+        {
+            topic: "Preparos Clássicos Árabes",
+            q: "Qual dos itens abaixo é um elemento típico da culinária árabe?",
+            image: "images/esfiha-aberta-de-carne-moida-730x480.jpeg",
+            options: ["Tahine (pasta de gergelim)", "Molho shoyu", "Curry verde", "Missô", "Wasabi"],
+            correct: 0,
+            exp: "Ingrediente chave:\n\n👉 tahine é base de vários pratos\n👉 muito usado em pastas e molhos\n👉 forte presença na culinária do Oriente Médio"
+        },
+        {
+            topic: "Receita Base – Charuto",
+            q: "O charuto de repolho é caracterizado por:",
+            image: "images/74588a21f714f9b7ca97118048f71804.avif",
+            options: ["Um prato frito de massa", "Um doce à base de leite", "Um prato cru", "Folhas recheadas com carne, arroz e temperos", "Um caldo leve de legumes"],
+            correct: 3,
+            exp: "Características:\n\n👉 folhas (repolho ou uva)\n👉 recheio de carne + arroz\n👉 cozimento lento"
+        },
+        {
+            topic: "Contexto Geral Índia",
+            q: "Qual característica define a culinária indiana de forma geral?",
+            image: "images/740e075b09fc8e78a65b5bbcaa09b1a8_charutos-especiais-1-receitas-nestle.jpeg",
+            options: ["Uso limitado de temperos", "Forte uso de especiarias e diversidade regional", "Base exclusiva em carnes", "Ausência de pratos vegetarianos", "Uso predominante de alimentos crus"],
+            correct: 1,
+            exp: "A Índia é marcada por:\n\n👉 uso intenso de especiarias\n👉 culinária extremamente regionalizada\n👉 grande variedade de pratos"
+        },
+        {
+            topic: "Influências Culturais Índia",
+            q: "Por que o vegetarianismo é comum na Índia?",
+            image: "images/foto2_gastronomia_thali_0.jpg",
+            options: ["Falta de carne", "Influência europeia", "Clima tropical", "Motivos religiosos", "Influência africana"],
+            correct: 3,
+            exp: "Fator principal:\n\n👉 religiões como hinduísmo\n👉 respeito à vida animal\n👉 forte tradição cultural"
+        },
+        {
+            topic: "Preparos Clássicos Índia",
+            q: "O que são as “masalas” na culinária indiana?",
+            image: "images/destaque_sabores_india_ilustrativo_zona_sul_pratos.jpg",
+            options: ["Tipos de carne", "Técnicas de fritura", "Misturas de especiarias", "Tipos de arroz", "Molhos prontos industrializados"],
+            correct: 2,
+            exp: "Masala:\n\n👉 combinação de especiarias\n👉 pode ser seca ou em pasta\n👉 feita fresca ou armazenada"
+        },
+        {
+            topic: "Receita Base – Chicken Tikka Masala",
+            q: "O Chicken Tikka Masala é caracterizado por:",
+            image: "images/52543.jpg.webp",
+            options: ["Frango cru servido frio", "Carne frita sem molho", "Peixe grelhado", "Massa com queijo", "Frango marinado em especiarias e servido com molho cremoso"],
+            correct: 4,
+            exp: "Características:\n\n👉 marinada com iogurte e especiarias\n👉 preparo no tandoor (tradicional)\n👉 finalizado com molho cremoso de tomate"
+        },
+        {
+            topic: "Contexto Geral Europa Oriental",
+            q: "A culinária da Europa Oriental é fortemente influenciada por:",
+            image: "images/comidas-europa.webp",
+            options: ["Clima frio e necessidade de alimentos energéticos", "Clima tropical", "Uso exclusivo de frutos do mar", "Dietas leves e frias", "Ausência de conservação de alimentos"],
+            correct: 0,
+            exp: "Características da região:\n\n👉 clima rigoroso\n👉 pratos mais pesados\n👉 foco em energia e conservação"
+        },
+        {
+            topic: "Influências Culturais Europa",
+            q: "Qual prática é comum nas culinárias do norte da Europa devido à herança viking?",
+            image: "images/influencia-italiana-na-gastronomia-brasileira.jpg.webp",
+            options: ["Uso de massas italianas", "Consumo de alimentos crus apenas", "Uso de pescados frescos e defumados", "Uso exclusivo de carne bovina", "Uso de especiarias indianas"],
+            correct: 2,
+            exp: "Herança viking:\n\n👉 pesca intensa\n👉 defumação como conservação\n👉 uso de conservas"
+        },
+        {
+            topic: "Preparos Clássicos Reino Unido",
+            q: "Qual dos itens abaixo é típico do Reino Unido?",
+            image: "images/fish-and-chips-2.jpg.webp",
+            options: ["Sushi", "Pad Thai", "Falafel", "Full English Breakfast", "Curry verde"],
+            correct: 3,
+            exp: "Clássico britânico:\n\n👉 ovos\n👉 bacon\n👉 feijão\n👉 embutidos\n👉 refeição completa"
+        },
+        {
+            topic: "Receita Base – Caviar",
+            q: "O caviar é caracterizado por:",
+            image: "images/19_20_00_439_459015_383879834992625_756552356_o.webp",
+            options: ["Carne seca temperada", "Ovos de peixe (ovas de esturjão)", "Um tipo de pão", "Um molho fermentado", "Um prato vegetariano"],
+            correct: 1,
+            exp: "Caviar:\n\n👉 ovas de esturjão\n👉 produto de luxo\n👉 manipulação delicada e fria"
+        },
+        {
+            topic: "Contexto Geral Cachupa",
+            q: "A Cachupa é um prato tradicional de qual país?",
+            image: "images/7416691-33831cf9709c4455a3382616f0dcfa6d-66586485.webp",
+            options: ["Angola", "Moçambique", "Cabo Verde", "Brasil", "Portugal"],
+            correct: 2,
+            exp: "Prato símbolo de Cabo Verde:\n\n👉 muito consumido no dia a dia\n👉 representa mistura cultural africana"
+        },
+        {
+            topic: "Influências Culturais Cachupa",
+            q: "Qual característica da Cachupa reflete sua origem cultural?",
+            image: "images/Design-sem-nome-2023-12-21T174323.986.jpg",
+            options: ["Uso de ingredientes industrializados", "Mistura de milho, feijão, carnes e tubérculos", "Uso exclusivo de frutos do mar", "Base apenas em vegetais crus", "Uso de massas italianas"],
+            correct: 1,
+            exp: "Prato de base popular:\n\n👉 mistura vários ingredientes\n👉 aproveitamento alimentar\n👉 influência rural e comunitária"
+        },
+        {
+            topic: "Preparos Clássicos Cachupa",
+            q: "Qual técnica é essencial no preparo da Cachupa?",
+            image: "images/voce-conhece-a-cachupa-aprenda-a-fazer-esse-prato-que-vai-agradar-a-todos-6495f51d-66a7-4242-a454-30f32b464214.jpg",
+            options: ["Fritura rápida", "Assar em forno alto", "Cozimento rápido em wok", "Cozimento lento e prolongado", "Fermentação"],
+            correct: 3,
+            exp: "Técnica chave:\n\n👉 cozimento longo\n👉 integração de sabores\n👉 textura encorpada"
+        },
+        {
+            topic: "Receita Base – Erro na Cachupa",
+            q: "Qual erro compromete a qualidade da Cachupa?",
+            image: "images/Cachupa-1024x538.jpg",
+            options: ["Usar milho", "Usar feijão", "Temperar com sal", "Cozinhar lentamente", "Não respeitar o tempo de cocção dos ingredientes"],
+            correct: 4,
+            exp: "Erro crítico:\\n\\n❌ ingredientes cozinham em tempos diferentes\n❌ pode ficar duro ou desmanchar demais\\n\n\n👉 correto:\ncontrole de tempo + sequência de cocção"
+        },
+        {
+            topic: "Contexto Geral Sudeste Asiático",
+            q: "O Curry Verde é um prato tradicional de qual país?",
+            image: "images/culinaria-do-Sudeste-Asiatico.jpg",
+            options: ["Índia", "Vietnã", "Indonésia", "Tailândia", "Malásia"],
+            correct: 3,
+            exp: "Prato clássico tailandês:\n\n👉 muito aromático\n👉 forte identidade de ervas frescas\n👉 uso de leite de coco"
+        },
+        {
+            topic: "Influências Culturais Sudeste Asiático",
+            q: "Qual influência externa ajudou a moldar a base técnica da culinária do Sudeste Asiático?",
+            image: "images/comidas-típicas-da-Ásia.png",
+            options: ["Alemã", "Chinesa", "Russa", "Árabe", "Inglesa"],
+            correct: 1,
+            exp: "Influência chinesa:\n\n👉 uso do wok\n👉 técnicas de salteado\n👉 macarrão e molho de soja"
+        },
+        {
+            topic: "Preparos Clássicos Curry Verde",
+            q: "O que diferencia o curry verde de outros curries?",
+            image: "images/images (4).jpg",
+            options: ["Uso de carne bovina apenas", "Uso de molho de tomate", "Uso de ervas frescas e pasta de curry verde", "Ausência de temperos", "Uso exclusivo de pimenta seca"],
+            correct: 2,
+            exp: "Identidade do prato:\n\n👉 pasta de curry verde artesanal\n👉 ervas frescas (coentro, capim-limão)\n👉 sabor mais herbal que pesado"
+        },
+        {
+            topic: "Receita Base – Erro no Curry Verde",
+            q: "Qual erro compromete diretamente o Curry Verde?",
+            image: "images/images (5).jpg",
+            options: ["Usar leite de coco", "Usar frango", "Temperar o prato", "Aquecer demais o leite de coco até separar", "Usar pasta de curry"],
+            correct: 3,
+            exp: "Erro crítico:\n\n❌ leite de coco pode talhar/separar\n❌ perde textura e aparência\n\n👉 correto:\nfogo médio + controle de temperatura"
+        },
+        {
+            topic: "Contexto Geral Curanto",
+            q: "O Curanto é um preparo tradicional de qual país da América do Sul?",
+            image: "images/images (6).jpg",
+            options: ["Brasil", "Peru", "Argentina", "Chile", "Colômbia"],
+            correct: 3,
+            exp: "Prato típico do Chile:\n\n👉 muito comum na Ilha de Chiloé\n👉 preparo coletivo e tradicional"
+        },
+        {
+            topic: "Influências Culturais Curanto",
+            q: "O Curanto tem origem principalmente em quais povos?",
+            image: "images/Image-1-140420.jpg",
+            options: ["Europeus modernos", "Povos indígenas da região", "Colonizadores ingleses", "Imigrantes asiáticos", "Africanos"],
+            correct: 1,
+            exp: "Origem ancestral:\n\n👉 técnica indígena\n👉 uso de recursos naturais\n👉 preparo comunitário"
+        },
+        {
+            topic: "Preparos Clássicos Curanto",
+            q: "Qual é a técnica característica do Curanto?",
+            image: "images/curanto-ajustada.jpg",
+            options: ["Fritura profunda", "Cozimento em panela de pressão", "Cocção subterrânea com pedras quentes", "Assar em forno elétrico", "Cozimento em banho-maria"],
+            correct: 2,
+            exp: "Técnica chave:\n\n👉 buraco no solo\n👉 pedras aquecidas\n👉 camadas de alimentos\n👉 coberto com folhas"
+        },
+        {
+            topic: "Receita Base – Erro no Curanto",
+            q: "Qual erro compromete o preparo tradicional do Curanto?",
+            image: "images/15992356820-curanto-773x458.jpg",
+            options: ["Usar frutos do mar", "Usar carnes", "Fazer em camadas", "Usar calor indireto das pedras", "Não aquecer suficientemente as pedras antes da montagem"],
+            correct: 4,
+            exp: "Erro crítico:\n\n❌ pedras frias = não gera calor suficiente\n❌ alimentos não cozinham corretamente\n\n👉 correto:\n\npedras extremamente quentes → cocção eficiente"
+        },
+        {
+            topic: "Contexto Geral Bori Bori",
+            q: "O Bori Bori é um prato tradicional de qual país?",
+            image: "images/bori-bori-receta-1753439141.webp",
+            options: ["Peru", "Paraguai", "Bolívia", "Chile", "Equador"],
+            correct: 1,
+            exp: "Prato típico paraguaio:\n\n👉 muito consumido em dias frios\n👉 considerado comida reconfortante"
+        },
+        {
+            topic: "Influências Culturais Bori Bori",
+            q: "A base do Bori Bori reflete principalmente qual herança cultural?",
+            image: "images/images (7).jpg",
+            options: ["Japonesa", "Francesa", "Indígena", "Árabe", "Alemã"],
+            correct: 2,
+            exp: "Influência indígena:\n\n👉 uso de milho (fubá)\n👉 preparos simples e nutritivos\n👉 ingredientes locais"
+        },
+        {
+            topic: "Preparos Clássicos Bori Bori",
+            q: "Qual é o elemento característico do Bori Bori?",
+            image: "images/images (8).jpg",
+            options: ["Carne seca desfiada", "Molho de tomate", "Macarrão", "Bolinhas de fubá com queijo", "Peixe cru"],
+            correct: 3,
+            exp: "Marca do prato:\n\n👉 bolinhas feitas de fubá + queijo\n👉 cozidas no caldo\n👉 dão corpo e textura"
+        },
+        {
+            topic: "Receita Base – Erro no Bori Bori",
+            q: "Qual erro compromete diretamente o Bori Bori?",
+            image: "images/f_327526.jpg",
+            options: ["Usar caldo quente", "Usar queijo", "Cozinhar lentamente", "Fazer bolinhas muito grandes e densas", "Temperar o caldo"],
+            correct: 3,
+            exp: "Erro clássico de prova:\n\n❌ bolinhas grandes demais\n❌ não cozinham por dentro\n❌ ficam pesadas\n\n👉 correto:\n\nbolinhas pequenas → cozimento uniforme"
+        },
+        {
+            topic: "Contexto Geral Chicken Tikka Masala",
+            q: "O Chicken Tikka Masala está mais associado a qual tradição culinária?",
+            image: "images/images (9).jpg",
+            options: ["Japonesa", "Mexicana", "Indiana (com influência britânica)", "Francesa", "Árabe"],
+            correct: 2,
+            exp: "Prato com origem debatida:\n\n👉 base indiana\n👉 popularizado no Reino Unido\n👉 exemplo de fusão cultural"
+        },
+        {
+            topic: "Influências Culturais Chicken Tikka Masala",
+            q: "Qual elemento cultural influencia diretamente o preparo do prato?",
+            image: "images/20230819112920-c2-a9andy_cooks_thumbnails_chicken_tikka_masala_01.webp",
+            options: ["Uso de técnicas francesas clássicas", "Uso do forno tandoor", "Uso de fermentação japonesa", "Uso de grelha americana", "Uso de panela wok"],
+            correct: 1,
+            exp: "Tandoor:\n\n👉 forno de barro\n👉 alta temperatura\n👉 dá sabor defumado característico"
+        },
+        {
+            topic: "Preparos Clássicos Chicken Tikka Masala",
+            q: "Qual etapa é ESSENCIAL antes de cozinhar o frango?",
+            image: "images/chicken-tikka-masala.jpg",
+            options: ["Fritar o frango cru", "Cozinhar em água", "Assar diretamente sem tempero", "Marinar em iogurte e especiarias", "Empanar o frango"],
+            correct: 3,
+            exp: "Marinada é chave:\n\n👉 iogurte amacia a carne\n👉 especiarias penetram\n👉 define o sabor do prato"
+        },
+        {
+            topic: "Receita Base – Erro no Chicken Tikka Masala",
+            q: "Qual erro compromete o resultado final do prato?",
+            image: "images/chicken_tikka_masala_and_40623_16x9.jpg",
+            options: ["Usar molho de tomate", "Usar especiarias", "Usar frango", "Cozinhar o molho", "Não marinar o frango adequadamente"],
+            correct: 4,
+            exp: "Erro crítico:\n\n❌ sem marinada → frango sem sabor interno\n❌ textura menos macia\n\n👉 correto:\n\ntempo de marinada bem respeitado"
+        },
+        {
+            topic: "Contexto Geral Causa Peruana",
+            q: "A Causa Peruana é um prato típico de qual país?",
+            image: "images/Causa-Limena-02.jpg",
+            options: ["Chile", "México", "Peru", "Colômbia", "Argentina"],
+            correct: 2,
+            exp: "Prato tradicional do Peru:\n\n👉 muito comum como entrada fria\n👉 forte presença da batata"
+        },
+        {
+            topic: "Influências Culturais Causa Peruana",
+            q: "Qual ingrediente mostra a herança indígena no prato?",
+            image: "images/236190peruvian-causafabeveryday4x3-00f2192cce684750b8767c7371031ea2.jpg",
+            options: ["Maionese", "Frango", "Limão", "Batata", "Azeite"],
+            correct: 3,
+            exp: "Base andina:\n\n👉 batata é um dos principais alimentos dos Andes\n👉 herança direta dos povos indígenas"
+        },
+        {
+            topic: "Preparos Clássicos Causa Peruana",
+            q: "Qual é a característica principal da Causa Peruana?",
+            image: "images/images (10).jpg",
+            options: ["Prato quente e frito", "Sopa encorpada", "Montagem em camadas", "Cozimento em forno", "Prato grelhado"],
+            correct: 2,
+            exp: "Técnica chave:\n\n👉 purê de batata temperado\n👉 recheios (frango, atum, etc.)\n👉 montagem em camadas"
+        },
+        {
+            topic: "Receita Base – Erro na Causa Peruana",
+            q: "Qual erro compromete a estrutura da Causa?",
+            image: "images/images (11).jpg",
+            options: ["Usar batata", "Usar recheio", "Temperar o purê", "Usar limão", "Fazer o purê muito úmido"],
+            correct: 4,
+            exp: "Erro crítico:\n\n❌ purê muito úmido\n❌ não sustenta as camadas\n❌ desmonta o prato\n\n👉 correto:\n\npurê firme e bem estruturado"
+        },
+        {
+            topic: "Contexto Geral Arepas",
+            q: "As arepas são tradicionais de quais países?",
+            image: "images/RM-arepas-zplk-threeByTwoLargeAt2X-v4.jpg",
+            options: ["Brasil e Argentina", "Peru e Chile", "México e EUA", "Venezuela e Colômbia", "Espanha e Portugal"],
+            correct: 3,
+            exp: "Prato típico:\n\n👉 muito comum na Venezuela e Colômbia\n👉 base alimentar diária"
+        },
+        {
+            topic: "Influências Culturais Arepas",
+            q: "As arepas têm origem principalmente em qual cultura?",
+            image: "images/Arepas-With-Black-Beans-And-Cheese-FT-RECIPE0424-3e28ca92276248ccbe66f679945bf94d.jpg",
+            options: ["Europeia", "Africana", "Indígena", "Asiática", "Árabe"],
+            correct: 2,
+            exp: "Origem ancestral:\n\n👉 povos indígenas pré-colombianos\n👉 uso do milho como base alimentar"
+        },
+        {
+            topic: "Preparos Clássicos Arepas",
+            q: "Qual é a característica principal da massa de arepa?",
+            image: "images/6-arepas-on-wooden-board-with-healthy-fillings.jpg",
+            options: ["Massa fermentada", "Massa líquida", "Massa feita com trigo", "Massa doce", "Massa de milho pré-cozido hidratado"],
+            correct: 4,
+            exp: "Base correta:\n\n👉 farinha de milho pré-cozida\n👉 hidratada com água e sal\n👉 modelada antes da cocção"
+        },
+        {
+            topic: "Receita Base – Erro nas Arepas",
+            q: "Qual erro compromete a textura da arepa?",
+            image: "images/__opt__aboutcom__coeus__resources__content_migration__serious_eats__seriouseats.com__recipes__images__2012__04__20111214-bean-soup-arepas-pork-stew-primary-1b60146803ee4ef0ac6c4f8eec08b80f.jpeg",
+            options: ["Usar milho", "Temperar a massa", "Cozinhar na chapa", "Hidratar corretamente", "Massa muito seca ou muito úmida"],
+            correct: 4,
+            exp: "Erro clássico:\n\n❌ seca → racha\n❌ úmida → perde estrutura\n\n👉 correto:\n\nponto equilibrado → macia por dentro, firme por fora"
+        }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+
+    function startQuiz() {
+        document.getElementById('intro-screen').classList.remove('active');
+        document.getElementById('quiz-screen').classList.add('active');
+        updateProgress();
+        loadQuestion();
+    }
+
+    function updateProgress() {
+        const progress = ((currentQuestion) / questions.length) * 100;
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+        document.getElementById('question-counter').innerText = `Questão ${currentQuestion + 1} de ${questions.length}`;
+    }
+
+    function loadQuestion() {
+        const qData = questions[currentQuestion];
+        document.getElementById('question-text').innerText = qData.q;
+        
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        // Gerir imagem relacionada à pergunta (se existir) ou manter espaço reservado
+        const imgContainer = document.getElementById('question-image');
+        if (qData.image) {
+            imgContainer.innerHTML = `<img src="${qData.image}" alt="Imagem relacionada à pergunta">`;
+            imgContainer.setAttribute('aria-hidden', 'false');
+        } else if (qData.videoUrl) {
+            imgContainer.innerHTML = `<a href="${qData.videoUrl}" target="_blank" rel="noopener noreferrer">Ver vídeo do YouTube</a>`;
+            imgContainer.setAttribute('aria-hidden', 'false');
+        } else {
+            imgContainer.innerHTML = '';
+            imgContainer.setAttribute('aria-hidden', 'true');
+        }
+        
+        const letras = ['A', 'B', 'C', 'D', 'E'];
+        
+        qData.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `<span>${letras[index]})</span> ${opt}`;
+            btn.onclick = () => checkAnswer(index, btn);
+            container.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selectedIndex, btnElement) {
+        const qData = questions[currentQuestion];
+        const allBtns = document.querySelectorAll('.option-btn');
+        
+        // Desativar botões
+        allBtns.forEach(btn => btn.disabled = true);
+
+        const titleEl = document.getElementById('feedback-title');
+        
+        if (selectedIndex === qData.correct) {
+            btnElement.classList.add('correct');
+            titleEl.innerText = "✅ Correto!";
+            titleEl.style.color = "var(--success)";
+            score++;
+        } else {
+            btnElement.classList.add('wrong');
+            allBtns[qData.correct].classList.add('correct');
+            titleEl.innerText = "❌ Incorreto!";
+            titleEl.style.color = "var(--error)";
+        }
+
+        document.getElementById('feedback-text').innerHTML = `<strong>Explicação:</strong> ${qData.exp}`;
+        
+        if (currentQuestion === questions.length - 1) {
+            document.getElementById('next-btn').innerText = "Ver Resultado Final";
+        }
+
+        // Mostrar Painel
+        document.getElementById('feedback-panel').classList.add('show');
+    }
+
+    function nextQuestion() {
+        document.getElementById('feedback-panel').classList.remove('show');
+        
+        setTimeout(() => {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                updateProgress();
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }, 400); // Tempo para a animação do painel descer
+    }
+
+    function showResults() {
+        document.getElementById('quiz-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+        document.getElementById('progress-bar').style.width = '100%';
+        
+        document.getElementById('final-score').innerText = `${score}/${questions.length}`;
+        
+        const titleEl = document.getElementById('result-title');
+        const msgEl = document.getElementById('result-message');
+        
+        if(score === 50) {
+            titleEl.innerText = "Grão-Mestre da Cozinha Mundial!";
+            msgEl.innerText = "Incrível! Demonstras um conhecimento impecável das técnicas de todas as regiões: woks asiáticas, purés europeus, especiarias indianas, natas, caril, óleo de palma e leite de coco de África.";
+        } else if(score >= 40) {
+            titleEl.innerText = "Excelente Cozinheiro!";
+            msgEl.innerText = "Ótima pontuação! Compreendes perfeitamente a lógica dos processos e técnicas de cozedura e escorregas apenas em pequenos detalhes pontuais.";
+        } else {
+            titleEl.innerText = "Precisa voltar para os tachos...";
+            msgEl.innerText = "A culinária mundial exige precisão absoluta. Reveja os processos de cozedura, emulsão, marinadas e controlo térmico das gorduras.";
+        }
+    }
+
+    /* LÓGICA DO EASTER EGG */
+    function checkSecretCode(value) {
+        const word = value.toLowerCase().trim();
+        // Aceita "fernanda" ou a digitação exata "fermanda" sugerida
+        if (word === 'fernanda' || word === 'fermanda') {
+            document.getElementById('result-screen').classList.remove('active');
+            document.getElementById('easter-egg-screen').classList.add('active');
+            document.getElementById('easter-egg-trigger').value = ''; // Limpa o campo para o futuro
+        }
+    }
+
+    function closeEasterEgg() {
+        document.getElementById('easter-egg-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+    }
+</script>
+
+</body>
+</html>
